@@ -31,7 +31,7 @@ def generate_google_maps_url(route_names, coord_dict):
     if not coords:
         return "Coordenadas não encontradas para gerar link."
     base_url = "https://www.google.com/maps/dir/"
-    # Google Maps: 1 origem + até 23 waypoints + 1 destino = 25 pontos
+    # Google Maps: 1 origem + até 15 waypoints + 1 destino
     max_points = 15
     urls = []
     for i in range(0, len(coords), max_points - 1):
@@ -262,8 +262,7 @@ class InterfaceGA:
         """
         if not self.islands:
             return
-        # Cada ilha possui history_best_fitness por geração, mas queremos usar valor do fim
-        # de cada bloco de migração. O tamanho do history é geracoes acumuladas.
+        # Cada ilha possui history_best_fitness por geração, mas deve-se usar valor do fim de cada bloco de migração. O tamanho do history é geracoes acumuladas.
         # Para simplificar, vamos extrair fitness nos índices múltiplos de migration_interval - 1.
         hi1 = self.islands[0].history_best_fitness
         hi2 = self.islands[1].history_best_fitness
