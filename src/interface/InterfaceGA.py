@@ -31,8 +31,13 @@ def generate_google_maps_url(route_names, coord_dict):
     if not coords:
         return "Coordenadas não encontradas para gerar link."
     base_url = "https://www.google.com/maps/dir/"
-    return base_url + "/".join(coords)
-
+    # Google Maps: 1 origem + até 23 waypoints + 1 destino = 25 pontos
+    max_points = 15
+    urls = []
+    for i in range(0, len(coords), max_points - 1):
+        chunk = coords[i:i + max_points]
+        urls.append(base_url + "/".join(chunk))
+    return urls
 
 class InterfaceGA:
 
@@ -293,17 +298,22 @@ class InterfaceGA:
         Exibe no text_area a melhor rota geral, distância e fitness, e reabilita botão Run.
         """
         self.running = False
-        # Calcular distância total do best_route_final
+        fazenda = "Fazenda em Delta - MG"
         if self.best_route_final is not None:
+            full_route = [fazenda] + self.best_route_final + [fazenda]
             best_distance = 300.0 - self.best_fitness_final
             self.text_area.insert(END, "Melhor rota geral encontrada:\n")
-            self.text_area.insert(END, " -> ".join(self.best_route_final) + "\n")
+            self.text_area.insert(END, " -> ".join(full_route) + "\n")
             self.text_area.insert(END, f"Distância total: {best_distance:.2f} km\n")
             self.text_area.insert(END, f"Fitness global: {self.best_fitness_final:.2f}\n")
         try:
             coord_dict = load_coordinates_from_csv('src/data/Planilha para caixeiro viajante mercados Uberaba.csv')
-            maps_url = generate_google_maps_url(self.best_route_final, coord_dict)
-            self.text_area.insert(END, f"\nLink para rota no Google Maps:\n{maps_url}\n")
+            maps_urls = generate_google_maps_url(full_route, coord_dict)
+            if isinstance(maps_urls, list):
+                for idx, url in enumerate(maps_urls, 1):
+                    self.text_area.insert(END, f"\nLink para rota no Google Maps (parte {idx}):\n{url}\n")
+            else:
+                self.text_area.insert(END, f"\nLink para rota no Google Maps:\n{maps_urls}\n")
         except Exception as e:
             self.text_area.insert(END, f"\nErro ao gerar link do Google Maps: {e}\n")
         self.status_label.config(text="Status: Concluído")
