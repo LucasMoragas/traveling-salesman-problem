@@ -17,6 +17,23 @@ def load_location_data(excel_path='src/data/locations.xlsx'):
         print(f"Error reading the Excel file: {e}")
         return None
 
+def load_cords_data(excel_path='src/data/coords.xlsx'):
+    """
+    Reads an Excel file containing coordinates and returns a DataFrame with the data.
+
+    Parameters:
+    excel_path (str): Path to the Excel file.
+
+    Returns:
+    pd.DataFrame: DataFrame containing the coordinates data.
+    """
+    try:
+        df = pd.read_excel(excel_path, header=0)
+        return df
+    except Exception as e:
+        print(f"Error reading the coordinates Excel file: {e}")
+        return None
+
 def dataframe_to_dict_list(df):
     """
     Converts a pandas DataFrame into a list of dictionaries,

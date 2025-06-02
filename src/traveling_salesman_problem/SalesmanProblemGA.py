@@ -2,7 +2,7 @@ import random
 import copy
 from concurrent.futures import ThreadPoolExecutor
 from src.data.data_prep import calculate_distance
-from src.data.data_prep import load_location_data, get_route_points
+from src.data.data_prep import load_location_data, get_route_points, load_cords_data
 
 
 class SalesmanProblemGA:
@@ -273,6 +273,42 @@ def multipopulation_evolution(islands, migration_interval=10):
 
     return best_global_route, best_global_fitness
 
+def get_route_points_cords(df, route):
+    """
+    Obtém as coordenadas de latitude e longitude para os pontos de uma rota.
+    
+    Args:
+        df (pd.DataFrame): DataFrame contendo as coordenadas das cidades.
+        route (list): Lista de nomes de cidades representando a rota.
+
+    Returns:
+        list: Lista de tuplas com as coordenadas (latitude, longitude) dos pontos da rota.
+    """
+    coords = []
+    for city in route:
+        row = df[df['Cidades'] == city]
+        if not row.empty:
+            coords.append((row['Coordenadas'].values[0]))
+    return coords
+
+def generate_google_maps_url(route_coords):
+    """
+    Gera uma URL do Google Maps para a rota especificada pelas coordenadas.
+
+    Args:
+        route_coords (list): Lista de strings com as coordenadas no formato 'lat, lon'.
+
+    Returns:
+        str: URL do Google Maps com a rota.
+    """
+    base_url = "https://www.google.com/maps/dir/?api=1"
+    start_end_cords = '-19.978458, -47.807004'  # Coordenadas da Fazenda em Delta - MG inicio e fim da rota
+    # Remove espaços das coordenadas e monta a string de waypoints separada por '|'
+    waypoints = '|'.join(coord.replace(' ', '') for coord in route_coords)
+    # Origem e destino são fixos (Fazenda em Delta - MG)
+    url = f"{base_url}&origin={start_end_cords.replace(' ', '')}&destination={start_end_cords.replace(' ', '')}&waypoints={waypoints}&travelmode=driving"
+    return url
+  
 
 if __name__ == "__main__":
     path = 'src/data/locations.xlsx'
@@ -286,7 +322,7 @@ if __name__ == "__main__":
         population_size=20,
         crossover_rate=0.9,
         mutation_rate=0.05,
-        generations=50,
+        generations=200,
         elitism_size=2,
         use_tournament_selection=True,
         tournament_size=3
@@ -297,16 +333,27 @@ if __name__ == "__main__":
         population_size=20,
         crossover_rate=0.9,
         mutation_rate=0.05,
-        generations=50,
+        generations=200,
         elitism_size=2,
         use_tournament_selection=True,
         tournament_size=3
     )
 
     # Executar evolução multipopulação
-    best_route, best_fitness = multipopulation_evolution([island1, island2], migration_interval=10)
+    best_route, best_fitness = multipopulation_evolution([island1, island2], migration_interval=20)
 
     print("Melhor rota geral encontrada:")
     print(" -> ".join(best_route))
     print(f"Fitness global: {best_fitness:.2f}")
     print("Distância total da melhor rota:", calculate_distance(df_distances, best_route))
+    
+    df_coords = load_cords_data()
+    best_route_coords = get_route_points_cords(df_coords, best_route)
+    
+    print("Coordenadas da melhor rota:")
+    print(best_route_coords)
+    
+    google_maps_url = generate_google_maps_url(best_route_coords)
+    print("URL do Google Maps para a rota:")
+    print(google_maps_url)
+        
