@@ -1,4 +1,5 @@
 import tkinter as tk
+import csv
 from tkinter import Frame, Label, Entry, Button, BooleanVar, Scrollbar, Text, END, LEFT, RIGHT, BOTH, Y
 import threading
 import matplotlib.pyplot as plt
@@ -7,7 +8,34 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from src.traveling_salesman_problem.SalesmanProblemGA import SalesmanProblemGA, multipopulation_evolution
 from src.data.data_prep import load_location_data, get_route_points
 
+def load_coordinates_from_csv(filepath):
+    """
+    Lê um CSV com formato: <nome do local>;<latitude>, <longitude>
+    Retorna um dicionário {nome: "lat,lng"}.
+    """
+    coord_dict = {}
+    with open(filepath, mode='r', encoding='utf-8') as file:
+        reader = csv.reader(file, delimiter=';')
+        for row in reader:
+            if len(row) >= 2:
+                name = row[0].strip()
+                coord = row[1].replace(" ", "").strip()  # Remove espaços entre lat e lng
+                coord_dict[name] = coord
+    return coord_dict
+
+def generate_google_maps_url(route_names, coord_dict):
+    """
+    Gera uma URL do Google Maps com base na sequência de nomes da rota e no dicionário de coordenadas.
+    """
+    coords = [coord_dict[name] for name in route_names if name in coord_dict]
+    if not coords:
+        return "Coordenadas não encontradas para gerar link."
+    base_url = "https://www.google.com/maps/dir/"
+    return base_url + "/".join(coords)
+
+
 class InterfaceGA:
+
     def __init__(self, root):
         """
         Interface gráfica para configurar e executar o Algoritmo Genético multipopulacional (duas ilhas)
@@ -272,6 +300,12 @@ class InterfaceGA:
             self.text_area.insert(END, " -> ".join(self.best_route_final) + "\n")
             self.text_area.insert(END, f"Distância total: {best_distance:.2f} km\n")
             self.text_area.insert(END, f"Fitness global: {self.best_fitness_final:.2f}\n")
+        try:
+            coord_dict = load_coordinates_from_csv('src/data/Planilha para caixeiro viajante mercados Uberaba.csv')
+            maps_url = generate_google_maps_url(self.best_route_final, coord_dict)
+            self.text_area.insert(END, f"\nLink para rota no Google Maps:\n{maps_url}\n")
+        except Exception as e:
+            self.text_area.insert(END, f"\nErro ao gerar link do Google Maps: {e}\n")
         self.status_label.config(text="Status: Concluído")
         self.run_button.config(state=tk.NORMAL)
 
