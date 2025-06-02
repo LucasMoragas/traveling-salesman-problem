@@ -208,7 +208,7 @@ class InterfaceGA:
         """
         Executa toda a evolução em thread separada, chamando callback na migração.
         """
-        def migration_callback(islands, block_index):
+        def migration_callback(block, best_fitnesses, best_route, best_fitness):
             # Agendar atualização de gráfico no mainloop
             self.root.after(0, self.update_plot_blocks)
 

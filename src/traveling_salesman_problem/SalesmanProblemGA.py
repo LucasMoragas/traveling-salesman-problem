@@ -195,19 +195,24 @@ class SalesmanProblemGA:
       self.population = next_population
 
     def evolve(self, num_generations=10):
-        """
-        Evolui a população por um número específico de gerações.
-        Retorna o melhor indivíduo e seu fitness ao final do bloco.
-        """
-        best_route = None
-        best_fitness = -float("inf")
-        for _ in range(num_generations):
-            fitnesses, distances, gen_best_route, gen_best_fit = self._evaluate_population()
-            if gen_best_fit > best_fitness:
-                best_fitness = gen_best_fit
-                best_route = gen_best_route[:]
-            self._create_next_generation(fitnesses)
-        return best_route, best_fitness
+      """
+      Evolui a população por um número específico de gerações.
+      Retorna o melhor indivíduo e seu fitness ao final do bloco.
+      """
+      best_route = None
+      best_fitness = -float("inf")
+      for _ in range(num_generations):
+          fitnesses, distances, gen_best_route, gen_best_fit = self._evaluate_population()
+
+          # 🔽 Adiciona o fitness ao histórico (necessário para o gráfico)
+          self.history_best_fitness.append(gen_best_fit)
+
+          if gen_best_fit > best_fitness:
+              best_fitness = gen_best_fit
+              best_route = gen_best_route[:]
+          self._create_next_generation(fitnesses)
+      return best_route, best_fitness
+
 
     def run(self):
       """
@@ -230,7 +235,7 @@ class SalesmanProblemGA:
       return best_overall, best_fitness_overall
 
 
-def multipopulation_evolution(islands, migration_interval=10):
+def multipopulation_evolution(islands, migration_interval=10, callback=None):
     """
     Recebe uma lista de instâncias de SalesmanProblemGA (ilhas) e executa a evolução paralela.
     A cada 'migration_interval' gerações, o melhor indivíduo de cada ilha é migrado para a próxima ilha.
@@ -263,13 +268,16 @@ def multipopulation_evolution(islands, migration_interval=10):
 
         # Migração: substituir pior de cada ilha pelo melhor da ilha anterior
         for i, island in enumerate(islands):
-            # Avaliar fitness atual para encontrar o pior
             fitnesses, _, _, _ = island._evaluate_population()
             worst_idx = min(range(len(island.population)), key=lambda idx: fitnesses[idx])
             best_from_prev = best_routes[(i - 1) % num_islands][:]
             island.population[worst_idx] = best_from_prev
 
         print(f"Após bloco {block + 1}, melhores fitness por ilha: {best_fitnesses}")
+
+        # Chama o callback, se fornecido
+        if callback is not None:
+            callback(block + 1, best_fitnesses, best_global_route, best_global_fitness)
 
     return best_global_route, best_global_fitness
 
